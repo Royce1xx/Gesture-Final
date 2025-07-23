@@ -1,67 +1,123 @@
+import sys
 from PyQt5.QtWidgets import (
-    QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout
+    QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout,
+    QGraphicsDropShadowEffect
 )
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve
+
 
 class SignUpWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        print("program running")
-
         self.setWindowTitle("Gesture Controller - Sign Up")
         self.setMinimumSize(800, 600)
         self.setStyleSheet("background-color: #0d1117;")
 
-        # 🌟 Signup form (center widget)
+        # 🌟 Glowing card container
         form_widget = QWidget()
-        form_widget.setFixedWidth(350)
+        form_widget.setFixedWidth(380)
+        form_widget.setStyleSheet("""
+            background-color: #1b1f27;
+            border-radius: 16px;
+        """)
 
+        # Add glow shadow
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(50)
+        shadow.setOffset(0, 0)
+        shadow.setColor(QColor(128, 223, 255))
+        form_widget.setGraphicsEffect(shadow)
+
+        # Add animated pulsing glow
+        self.glow_anim = QPropertyAnimation(shadow, b"blurRadius")
+        self.glow_anim.setStartValue(40)
+        self.glow_anim.setEndValue(70)
+        self.glow_anim.setDuration(1500)
+        self.glow_anim.setEasingCurve(QEasingCurve.InOutQuad)
+        self.glow_anim.setLoopCount(-1)
+        self.glow_anim.start()
+
+        # Layout inside form
         form_layout = QVBoxLayout()
 
-        # Title
         title = QLabel("Sign Up")
-        title.setFont(QFont("Arial", 24))
+        title.setFont(QFont("Arial", 26))
         title.setStyleSheet("color: #80dfff;")
         title.setAlignment(Qt.AlignCenter)
 
-        # Email input
         email_input = QLineEdit()
         email_input.setPlaceholderText("Email")
-        email_input.setStyleSheet("padding: 10px; background-color: #1e222a; border: 1px solid #80dfff; color: white;")
+        email_input.setStyleSheet("""
+            padding: 12px;
+            background-color: #0e1016;
+            border: 1px solid #80dfff;
+            border-radius: 8px;
+            color: white;
+        """)
 
-        # Password input
         password_input = QLineEdit()
         password_input.setPlaceholderText("Password")
         password_input.setEchoMode(QLineEdit.Password)
-        password_input.setStyleSheet("padding: 10px; background-color: #1e222a; border: 1px solid #80dfff; color: white;")
+        password_input.setStyleSheet("""
+            padding: 12px;
+            background-color: #0e1016;
+            border: 1px solid #80dfff;
+            border-radius: 8px;
+            color: white;
+        """)
 
-        # Buttons
-        signup_button = QPushButton("Sign Up")
-        signup_button.setStyleSheet("background-color: #80dfff; padding: 10px; font-weight: bold; border-radius: 5px;")
+        signup_btn = QPushButton("Sign Up")
+        signup_btn.setCursor(Qt.PointingHandCursor)
+        signup_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #80dfff;
+                padding: 12px;
+                font-weight: bold;
+                color: black;
+                border: none;
+                border-radius: 8px;
+            }
+            QPushButton:hover {
+                background-color: #a5e8ff;
+            }
+        """)
 
-        google_button = QPushButton("Sign Up with Google")
-        google_button.setStyleSheet("background-color: white; padding: 10px; color: black; border-radius: 5px;")
+        google_btn = QPushButton("Sign Up with Google")
+        google_btn.setCursor(Qt.PointingHandCursor)
+        google_btn.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                padding: 12px;
+                color: black;
+                font-weight: bold;
+                border-radius: 8px;
+            }
+            QPushButton:hover {
+                background-color: #e6e6e6;
+            }
+        """)
 
         login_label = QLabel("Already have an account?")
-        login_label.setStyleSheet("color: white;")
+        login_label.setStyleSheet("color: #b0b0b0; font-size: 13px;")
         login_label.setAlignment(Qt.AlignCenter)
 
-        # Add widgets to form layout
+        form_layout.addStretch()
         form_layout.addWidget(title)
         form_layout.addSpacing(20)
         form_layout.addWidget(email_input)
         form_layout.addWidget(password_input)
-        form_layout.addSpacing(10)
-        form_layout.addWidget(signup_button)
-        form_layout.addWidget(google_button)
+        form_layout.addSpacing(15)
+        form_layout.addWidget(signup_btn)
+        form_layout.addWidget(google_btn)
         form_layout.addSpacing(10)
         form_layout.addWidget(login_label)
+        form_layout.addStretch()
 
         form_widget.setLayout(form_layout)
 
-        # 🌟 Outer layout to center form
+        # Center it
         outer_layout = QHBoxLayout()
         outer_layout.addStretch()
         outer_layout.addWidget(form_widget)
@@ -74,10 +130,8 @@ class SignUpWindow(QWidget):
 
         self.setLayout(main_layout)
 
-if __name__ == "__main__":
-    import sys
-    from PyQt5.QtWidgets import QApplication
 
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SignUpWindow()
     window.show()
