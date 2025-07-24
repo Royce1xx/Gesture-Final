@@ -152,32 +152,39 @@ class HomePage(QWidget):
         
         header_layout.addStretch()
         
-        # Current Hand Gesture section
+        # Current Hand Gesture section - centered and stacked
         gesture_section = QVBoxLayout()
-        gesture_section.setSpacing(8)
+        gesture_section.setSpacing(6)
+        gesture_section.setAlignment(Qt.AlignCenter)
         
         # Header text
         self.gesture_header = QLabel("Current Hand Gesture")
-        self.gesture_header.setFont(QFont("Segoe UI", 14, QFont.Medium))
-        self.gesture_header.setAlignment(Qt.AlignRight)
+        self.gesture_header.setFont(QFont("Segoe UI", 12, QFont.Normal))
+        self.gesture_header.setAlignment(Qt.AlignCenter)
         
-        # Status container
-        self.status_container = QFrame()
-        status_container_layout = QHBoxLayout(self.status_container)
-        status_container_layout.setContentsMargins(15, 10, 15, 10)
-        status_container_layout.setSpacing(10)
+        # Centered status indicator
+        status_layout = QHBoxLayout()
+        status_layout.setSpacing(8)
+        status_layout.setContentsMargins(0, 0, 0, 0)
         
         self.status_dot = QLabel("●")
-        self.status_dot.setFont(QFont("Segoe UI", 12))
+        self.status_dot.setFont(QFont("Segoe UI", 10))
         
         self.status_text = QLabel("Fist")
-        self.status_text.setFont(QFont("Segoe UI", 14, QFont.Medium))
+        self.status_text.setFont(QFont("Segoe UI", 16, QFont.Medium))
+        self.status_text.setAlignment(Qt.AlignCenter)
         
-        status_container_layout.addWidget(self.status_dot)
-        status_container_layout.addWidget(self.status_text)
+        status_layout.addWidget(self.status_dot)
+        status_layout.addWidget(self.status_text)
+        
+        # Center the status layout
+        status_container = QHBoxLayout()
+        status_container.addStretch()
+        status_container.addLayout(status_layout)
+        status_container.addStretch()
         
         gesture_section.addWidget(self.gesture_header)
-        gesture_section.addWidget(self.status_container)
+        gesture_section.addLayout(status_container)
         
         header_layout.addLayout(gesture_section)
         
@@ -272,14 +279,7 @@ class HomePage(QWidget):
             
             self.gesture_header.setStyleSheet("color: #ccc; background: transparent;")
             self.status_dot.setStyleSheet("color: #00ff88;")
-            self.status_text.setStyleSheet("color: #ccc; background: transparent;")
-            self.status_container.setStyleSheet("""
-                QFrame {
-                    background: rgba(0, 255, 136, 0.08);
-                    border: 1px solid rgba(0, 255, 136, 0.2);
-                    border-radius: 22px;
-                }
-            """)
+            self.status_text.setStyleSheet("color: #fff; background: transparent;")
             
             self.welcome.setStyleSheet("""
                 color: #ffffff;
@@ -342,16 +342,9 @@ class HomePage(QWidget):
             """)
             self.logo_glow.setColor(QColor(30, 136, 229, 120))
             
-            self.gesture_header.setStyleSheet("color: #2c3e50; background: transparent;")
+            self.gesture_header.setStyleSheet("color: #7c8892; background: transparent;")
             self.status_dot.setStyleSheet("color: #00c853;")
-            self.status_text.setStyleSheet("color: #2c3e50; background: transparent;")
-            self.status_container.setStyleSheet("""
-                QFrame {
-                    background: rgba(135, 206, 250, 0.15);
-                    border: 1px solid rgba(135, 206, 250, 0.4);
-                    border-radius: 22px;
-                }
-            """)
+            self.status_text.setStyleSheet("color: #1a237e; background: transparent;")
             
             self.welcome.setStyleSheet("""
                 color: #1a237e;
