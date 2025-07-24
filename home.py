@@ -12,43 +12,49 @@ class SlimCard(QFrame):
         super().__init__()
         self.setFrameStyle(QFrame.NoFrame)
         self.setCursor(Qt.PointingHandCursor)
+        self.setMinimumHeight(60)  # Ensure minimum height
         
         layout = QHBoxLayout()
-        layout.setContentsMargins(25, 20, 25, 20)
+        layout.setContentsMargins(25, 18, 25, 18)
         layout.setSpacing(15)
         
         # Icon (if provided)
         if icon:
             icon_label = QLabel(icon)
-            icon_label.setFont(QFont("Segoe UI", 20))
-            icon_label.setFixedWidth(30)
+            icon_label.setFont(QFont("Segoe UI", 18))
+            icon_label.setFixedWidth(35)
             icon_label.setAlignment(Qt.AlignCenter)
             layout.addWidget(icon_label)
         
-        # Text content
+        # Text content with better responsive handling
         text_layout = QVBoxLayout()
-        text_layout.setSpacing(2)
+        text_layout.setSpacing(3)
         text_layout.setContentsMargins(0, 0, 0, 0)
         
         title_label = QLabel(title)
-        title_label.setFont(QFont("Segoe UI", 16, QFont.Medium))
+        title_label.setFont(QFont("Segoe UI", 15, QFont.Medium))
         title_label.setStyleSheet("color: #ffffff;")
+        title_label.setWordWrap(False)  # Prevent wrapping
+        title_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         
         text_layout.addWidget(title_label)
         
         if subtitle:
             subtitle_label = QLabel(subtitle)
-            subtitle_label.setFont(QFont("Segoe UI", 12))
+            subtitle_label.setFont(QFont("Segoe UI", 11))
             subtitle_label.setStyleSheet("color: #888;")
+            subtitle_label.setWordWrap(True)  # Allow subtitle to wrap if needed
+            subtitle_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             text_layout.addWidget(subtitle_label)
         
         layout.addLayout(text_layout)
-        layout.addStretch()
         
-        # Arrow indicator
+        # Arrow indicator - fixed width to prevent layout shifts
         arrow = QLabel("→")
         arrow.setFont(QFont("Segoe UI", 16))
         arrow.setStyleSheet("color: #40e0ff;")
+        arrow.setFixedWidth(20)
+        arrow.setAlignment(Qt.AlignCenter)
         layout.addWidget(arrow)
         
         self.setLayout(layout)
@@ -95,7 +101,7 @@ class HomePage(QWidget):
 
     def setup_ui(self):
         self.setWindowTitle("Gesture Controller")
-        self.setMinimumSize(900, 650)
+        self.setMinimumSize(950, 650)  # Increased minimum width to prevent text cutoff
         self.setStyleSheet("""
             HomePage {
                 background: #030305;
@@ -146,10 +152,27 @@ class HomePage(QWidget):
         
         main_layout.addLayout(header_layout)
 
-        # Welcome message
+        # Welcome message with more pop
         welcome = QLabel("Welcome back, Royce")
-        welcome.setFont(QFont("Segoe UI", 24, QFont.Light))
-        welcome.setStyleSheet("color: #fff; margin: 20px 0;")
+        welcome.setFont(QFont("Segoe UI", 32, QFont.Bold))
+        welcome.setStyleSheet("""
+            color: #ffffff;
+            margin: 25px 0 35px 0;
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 rgba(64, 224, 255, 0.1), 
+                stop:1 rgba(64, 224, 255, 0.05));
+            padding: 15px 0;
+            border-radius: 8px;
+        """)
+        welcome.setAlignment(Qt.AlignCenter)
+        
+        # Add glow to welcome text
+        welcome_glow = QGraphicsDropShadowEffect()
+        welcome_glow.setBlurRadius(40)
+        welcome_glow.setColor(QColor(64, 224, 255, 60))
+        welcome_glow.setOffset(0, 0)
+        welcome.setGraphicsEffect(welcome_glow)
+        
         main_layout.addWidget(welcome)
 
         # Navigation cards
