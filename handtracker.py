@@ -1,11 +1,53 @@
 import cv2
 import numpy as np
+import math
 
 cv2.namedWindow("Hand Tracking", cv2.WINDOW_NORMAL)
 cap = cv2.VideoCapture(0)
 
 lowerSkin = np.array([0, 133, 77], dtype=np.uint8)
 upperSkin = np.array([255, 173, 127], dtype=np.uint8)
+
+
+def extract_gesture_vector(contour, defects, frame_height):
+    vector = []
+    defect_depths = []
+    defect_angles = []
+
+    finger_count = 0
+
+    if defects is not None:
+        for i in range(defects.shape[0]):
+            s, e, f, d = defects[i, 0]
+            start = contour[s][0]
+            end = contour[e][0]
+            far = contour[f][0]
+
+            a = np.linalg.norm(start - far)
+            b = np.linalg.norm(end - far)
+            c = np.linalg.norm(end - start)
+
+            if a == 0 or b == 0:
+                continue
+
+            angle = math.acos((a**2 + b**2 - c**2) / (2 * a * b))
+
+            # Accept only tight valleys between fingers
+            if d > 5000 and angle < math.pi / 2 and far[1] < frame_height * 0.8:
+                finger_count += 1
+                defect_depths.append(int(d))
+                defect_angles.append(round(angle, 2))
+
+    # Normalize values
+    normalized_depths = [round(d / 20000, 2) for d in defect_depths]
+    normalized_angles = [round(a / (math.pi / 2), 2) for a in defect_angles]
+
+    vector.append(finger_count + 1 if finger_count > 0 else 0)
+    vector.extend(normalized_depths)
+    vector.extend(normalized_angles)
+
+    return vector
+
 
 while True:
     ret, frame = cap.read()
@@ -40,22 +82,16 @@ while True:
                     end = handCont[e][0]
                     far = handCont[f][0]
 
-                    # Convert to float for vector math
                     a = np.linalg.norm(start - far)
                     b = np.linalg.norm(end - far)
                     c = np.linalg.norm(end - start)
 
                     if a == 0 or b == 0:
-                        continue  # skip to avoid division error
+                        continue
 
-                    # Cosine Rule to find angle
-                    angle = np.arccos((a**2 + b**2 - c**2) / (2 * a * b))
+                    angle = math.acos((a**2 + b**2 - c**2) / (2 * a * b))
 
-                    # Filter out wrist/side noise:
-                    # - Defect must be deep enough
-                    # - Angle must be sharp (<90 deg)
-                    # - Y-position of valley must be higher than palm base
-                    if d > 5000 and angle < np.pi / 2 and far[1] < frame.shape[0] * 0.8:
+                    if d > 5000 and angle < math.pi / 2 and far[1] < frame.shape[0] * 0.8:
                         finger_count += 1
                         cv2.circle(frame, tuple(start), 6, (0, 0, 255), -1)
                         cv2.circle(frame, tuple(far), 5, (0, 255, 255), -1)
@@ -63,6 +99,10 @@ while True:
                 fingers = finger_count + 1 if finger_count > 0 else 0
                 cv2.putText(frame, f"Fingers: {fingers}", (10, 50),
                             cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
+
+            # 🔎 Extract the gesture vector
+            gesture_vector = extract_gesture_vector(handCont, defects, frame.shape[0])
+            print("Live vector:", gesture_vector)
 
     cv2.imshow("Hand Tracker", frame)
     cv2.imshow("Skin Mask", skinMask)
