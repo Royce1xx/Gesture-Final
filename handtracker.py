@@ -24,6 +24,11 @@ while True:
 
         if cv2.contourArea(handCont) > 1000:
             cv2.drawContours(frame, [handCont], -1, (0, 255, 0), 2)
+            hull = cv2.convexHull(handCont)
+            cv2.drawContours(frame, [hull], -1, (255, 0, 0), 2)
+
+            
+            
 
     cv2.imshow("Hand Tracker", frame)
     cv2.imshow("Skin Mask", skinMask)
