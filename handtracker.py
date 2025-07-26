@@ -4,7 +4,6 @@ import numpy as np
 cv2.namedWindow("Hand Tracking", cv2.WINDOW_NORMAL)
 cap = cv2.VideoCapture(0)
 
-# Skin color thresholds in YCrCb
 lowerSkin = np.array([0, 133, 77], dtype=np.uint8)
 upperSkin = np.array([255, 173, 127], dtype=np.uint8)
 
@@ -14,51 +13,60 @@ while True:
         break
 
     frame = cv2.flip(frame, 1)
-    colorConvert = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
-    skinMask = cv2.inRange(colorConvert, lowerSkin, upperSkin)
+    ycrcb = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
+    skinMask = cv2.inRange(ycrcb, lowerSkin, upperSkin)
     skinMask = cv2.GaussianBlur(skinMask, (5, 5), 0)
 
-    cont, _ = cv2.findContours(skinMask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(skinMask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    if cont:
-        handCont = max(cont, key=cv2.contourArea)
+    if contours:
+        handCont = max(contours, key=cv2.contourArea)
+        area = cv2.contourArea(handCont)
 
-        if cv2.contourArea(handCont) > 1000:
-            # Draw green hand contour
+        if 3000 < area < 30000:
             cv2.drawContours(frame, [handCont], -1, (0, 255, 0), 2)
-
-            # Convex Hull (blue)
             hull = cv2.convexHull(handCont)
             cv2.drawContours(frame, [hull], -1, (255, 0, 0), 2)
 
-            # Convexity Defects
-            hullIndices = cv2.convexHull(handCont, returnPoints=False)
-            defects = cv2.convexityDefects(handCont, hullIndices)
+            hull_indices = cv2.convexHull(handCont, returnPoints=False)
+            defects = cv2.convexityDefects(handCont, hull_indices)
 
             if defects is not None:
+                finger_count = 0
+
                 for i in range(defects.shape[0]):
                     s, e, f, d = defects[i, 0]
+                    start = handCont[s][0]
+                    end = handCont[e][0]
+                    far = handCont[f][0]
 
-                    start = tuple(handCont[s][0])  # Fingertip
-                    end = tuple(handCont[e][0])
-                    far = tuple(handCont[f][0])   # Valley
-                    depth = d
+                    # Convert to float for vector math
+                    a = np.linalg.norm(start - far)
+                    b = np.linalg.norm(end - far)
+                    c = np.linalg.norm(end - start)
 
-                    if depth > 10000:
-                        # Draw red circle at fingertip
-                        cv2.circle(frame, start, 6, (0, 0, 255), -1)
+                    if a == 0 or b == 0:
+                        continue  # skip to avoid division error
 
-                        # Draw yellow circle at valley
-                        cv2.circle(frame, far, 5, (0, 255, 255), -1)
+                    # Cosine Rule to find angle
+                    angle = np.arccos((a**2 + b**2 - c**2) / (2 * a * b))
 
-                        # Optional: connect fingertip-to-fingertip
-                        # cv2.line(frame, start, end, (255, 255, 255), 1)
+                    # Filter out wrist/side noise:
+                    # - Defect must be deep enough
+                    # - Angle must be sharp (<90 deg)
+                    # - Y-position of valley must be higher than palm base
+                    if d > 5000 and angle < np.pi / 2 and far[1] < frame.shape[0] * 0.8:
+                        finger_count += 1
+                        cv2.circle(frame, tuple(start), 6, (0, 0, 255), -1)
+                        cv2.circle(frame, tuple(far), 5, (0, 255, 255), -1)
 
-    # Display windows
+                fingers = finger_count + 1 if finger_count > 0 else 0
+                cv2.putText(frame, f"Fingers: {fingers}", (10, 50),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
+
     cv2.imshow("Hand Tracker", frame)
     cv2.imshow("Skin Mask", skinMask)
 
-    # Quit on 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
