@@ -1,17 +1,16 @@
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
-    QGraphicsDropShadowEffect, QFrame, QSpacerItem, QSizePolicy
+    QGraphicsDropShadowEffect, QFrame, QSizePolicy, QStackedWidget
 )
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
 
-from settings import HandCalibrationWindow  # ✅ Import settings window
+from settings import HandCalibrationWindow
 
 class SlimCard(QFrame):
     def __init__(self, title, subtitle="", icon="", parent=None):
         super().__init__(parent)
-        self.setFrameStyle(QFrame.NoFrame)
         self.setCursor(Qt.PointingHandCursor)
         self.setMinimumHeight(60)
 
@@ -32,7 +31,7 @@ class SlimCard(QFrame):
 
         self.title_label = QLabel(title)
         self.title_label.setFont(QFont("Segoe UI", 15, QFont.Medium))
-        self.title_label.setWordWrap(False)
+        self.title_label.setWordWrap(True)
         self.title_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         text_layout.addWidget(self.title_label)
 
@@ -42,8 +41,6 @@ class SlimCard(QFrame):
             self.subtitle_label.setWordWrap(True)
             self.subtitle_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             text_layout.addWidget(self.subtitle_label)
-        else:
-            self.subtitle_label = None
 
         layout.addLayout(text_layout)
 
@@ -55,42 +52,21 @@ class SlimCard(QFrame):
 
         self.setLayout(layout)
         self.setup_glow()
+        self.apply_theme(True)
 
     def apply_theme(self, is_dark):
         if is_dark:
-            self.setStyleSheet("""
-                SlimCard {
-                    background: rgba(15, 20, 30, 0.6);
-                    border: 1px solid rgba(64, 224, 255, 0.15);
-                    border-radius: 8px;
-                }
-                SlimCard:hover {
-                    background: rgba(20, 30, 45, 0.8);
-                    border: 1px solid rgba(64, 224, 255, 0.3);
-                }
-            """)
+            self.setStyleSheet("background-color: transparent;")
             self.title_label.setStyleSheet("color: #ffffff;")
-            if self.subtitle_label:
-                self.subtitle_label.setStyleSheet("color: #888;")
+            if hasattr(self, 'subtitle_label') and self.subtitle_label:
+                self.subtitle_label.setStyleSheet("color: #aaaaaa;")
             self.arrow.setStyleSheet("color: #40e0ff;")
-            self.glow.setColor(QColor(64, 224, 255, 40))
         else:
-            self.setStyleSheet("""
-                SlimCard {
-                    background: rgba(255, 255, 255, 0.8);
-                    border: 1px solid rgba(135, 206, 250, 0.3);
-                    border-radius: 8px;
-                }
-                SlimCard:hover {
-                    background: rgba(240, 248, 255, 0.9);
-                    border: 1px solid rgba(135, 206, 250, 0.5);
-                }
-            """)
+            self.setStyleSheet("background-color: transparent;")
             self.title_label.setStyleSheet("color: #1a237e;")
-            if self.subtitle_label:
+            if hasattr(self, 'subtitle_label') and self.subtitle_label:
                 self.subtitle_label.setStyleSheet("color: #546e7a;")
             self.arrow.setStyleSheet("color: #1e88e5;")
-            self.glow.setColor(QColor(135, 206, 250, 60))
 
     def setup_glow(self):
         self.glow = QGraphicsDropShadowEffect()
@@ -112,16 +88,18 @@ class HomePage(QWidget):
         super().__init__()
         self.is_dark_theme = True
         self.cards = []
+        self.stacked_widget = QStackedWidget()
+        self.main_widget = QWidget()
         self.setup_ui()
         self.apply_theme()
 
     def setup_ui(self):
         self.setWindowTitle("Gesture Controller")
-        self.setMinimumSize(950, 650)
+        self.resize(950, 650)
 
-        main_layout = QVBoxLayout()
-        main_layout.setSpacing(35)
-        main_layout.setContentsMargins(50, 40, 50, 40)
+        self.main_layout = QVBoxLayout(self.main_widget)
+        self.main_layout.setSpacing(25)
+        self.main_layout.setContentsMargins(30, 30, 30, 30)
 
         header_layout = QHBoxLayout()
 
@@ -138,6 +116,7 @@ class HomePage(QWidget):
         self.theme_btn = QPushButton("☀️")
         self.theme_btn.setFixedSize(40, 40)
         self.theme_btn.setCursor(Qt.PointingHandCursor)
+        self.theme_btn.setStyleSheet("color: #ffffff; background-color: #222; border: 1px solid #444; border-radius: 20px;")
         self.theme_btn.clicked.connect(self.toggle_theme)
         header_layout.addWidget(self.theme_btn)
         header_layout.addStretch()
@@ -151,9 +130,6 @@ class HomePage(QWidget):
         self.gesture_header.setAlignment(Qt.AlignCenter)
 
         status_layout = QHBoxLayout()
-        status_layout.setSpacing(8)
-        status_layout.setContentsMargins(0, 0, 0, 0)
-
         self.status_dot = QLabel("●")
         self.status_dot.setFont(QFont("Segoe UI", 10))
         self.status_text = QLabel("Fist")
@@ -163,16 +139,11 @@ class HomePage(QWidget):
         status_layout.addWidget(self.status_dot)
         status_layout.addWidget(self.status_text)
 
-        status_container = QHBoxLayout()
-        status_container.addStretch()
-        status_container.addLayout(status_layout)
-        status_container.addStretch()
-
         gesture_section.addWidget(self.gesture_header)
-        gesture_section.addLayout(status_container)
-
+        gesture_section.addLayout(status_layout)
         header_layout.addLayout(gesture_section)
-        main_layout.addLayout(header_layout)
+
+        self.main_layout.addLayout(header_layout)
 
         self.welcome = QLabel("Welcome back, Royce")
         self.welcome.setFont(QFont("Segoe UI", 32, QFont.Bold))
@@ -181,11 +152,9 @@ class HomePage(QWidget):
         self.welcome_glow.setBlurRadius(40)
         self.welcome_glow.setOffset(0, 0)
         self.welcome.setGraphicsEffect(self.welcome_glow)
-        main_layout.addWidget(self.welcome)
+        self.main_layout.addWidget(self.welcome)
 
         cards_layout = QVBoxLayout()
-        cards_layout.setSpacing(12)
-
         nav_items = [
             ("Train New Gestures", "Create and customize gesture controls", "🎯"),
             ("Gesture Library", "Browse and manage saved gestures", "📚"),
@@ -198,42 +167,70 @@ class HomePage(QWidget):
             card = SlimCard(title, subtitle, icon, self)
             self.cards.append(card)
             cards_layout.addWidget(card)
-
             if title == "Settings & Config":
                 card.mousePressEvent = self.open_settings
 
-        main_layout.addLayout(cards_layout)
-        main_layout.addStretch()
+        self.main_layout.addLayout(cards_layout)
 
-        quick_actions = QHBoxLayout()
-        quick_actions.setSpacing(15)
-
-        self.screenshot_btn = QPushButton("📸 Screenshot")
-        self.screenshot_btn.setCursor(Qt.PointingHandCursor)
-        self.help_btn = QPushButton("❓ Help")
-        self.help_btn.setCursor(Qt.PointingHandCursor)
-
-        quick_actions.addStretch()
-        quick_actions.addWidget(self.screenshot_btn)
-        quick_actions.addWidget(self.help_btn)
-        main_layout.addLayout(quick_actions)
-
-        self.setLayout(main_layout)
+        self.stacked_widget.addWidget(self.main_widget)
+        self.setLayout(QVBoxLayout())
+        self.layout().addWidget(self.stacked_widget)
 
     def toggle_theme(self):
         self.is_dark_theme = not self.is_dark_theme
         self.apply_theme()
 
+    def go_back_home(self):
+        self.stacked_widget.setCurrentWidget(self.main_widget)
+
     def apply_theme(self):
-        # Apply all your existing dark/light mode styling here
-        ...
+        if self.is_dark_theme:
+            self.setStyleSheet("background-color: #0d1b2a;")
+            self.logo.setStyleSheet("color: #40e0ff;")
+            self.theme_btn.setText("☀️")
+            self.theme_btn.setStyleSheet("color: #ffffff; background-color: #222; border: 1px solid #444; border-radius: 20px;")
+            self.status_dot.setStyleSheet("color: #00ff88;")
+            self.status_text.setStyleSheet("color: white;")
+            self.welcome.setStyleSheet("color: white;")
+        else:
+            self.setStyleSheet("background-color: #f8fbff;")
+            self.logo.setStyleSheet("color: #1e88e5;")
+            self.theme_btn.setText("🌙")
+            self.theme_btn.setStyleSheet("color: #1a237e; background-color: #ddeeff; border: 1px solid #aaccff; border-radius: 20px;")
+            self.status_dot.setStyleSheet("color: #00c853;")
+            self.status_text.setStyleSheet("color: #1a237e;")
+            self.welcome.setStyleSheet("color: #1a237e;")
+
         for card in self.cards:
             card.apply_theme(self.is_dark_theme)
 
-    # ✅ Opens settings.py calibration window
     def open_settings(self, event):
-        self.settings_window = HandCalibrationWindow()
-        self.settings_window.show()
+        self.calibration_page = QWidget()
+        layout = QVBoxLayout(self.calibration_page)
+
+        back_btn = QPushButton("← Back")
+        back_btn.setFixedSize(100, 36)
+        back_btn.setCursor(Qt.PointingHandCursor)
+        back_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #40e0ff;
+                color: black;
+                font-weight: bold;
+                font-size: 13px;
+                border-radius: 8px;
+            }
+            QPushButton:hover {
+                background-color: #66ebff;
+            }
+        """)
+        back_btn.clicked.connect(self.go_back_home)
+        layout.addWidget(back_btn, alignment=Qt.AlignLeft)
+
+        calibration_widget = HandCalibrationWindow()
+        layout.addWidget(calibration_widget)
+
+        self.stacked_widget.addWidget(self.calibration_page)
+        self.stacked_widget.setCurrentWidget(self.calibration_page)
 
 
 if __name__ == "__main__":
