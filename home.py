@@ -177,6 +177,12 @@ class HomePage(QWidget):
         self.layout().addWidget(self.stacked_widget)
 
     def toggle_theme(self):
+        # update current page if settings is open
+        if hasattr(self, 'calibration_page'):
+            for i in range(self.calibration_page.layout().count()):
+                widget = self.calibration_page.layout().itemAt(i).widget()
+                if hasattr(widget, 'apply_theme'):
+                    widget.apply_theme(not self.is_dark_theme)
         self.is_dark_theme = not self.is_dark_theme
         self.apply_theme()
 
@@ -227,6 +233,8 @@ class HomePage(QWidget):
         layout.addWidget(back_btn, alignment=Qt.AlignLeft)
 
         calibration_widget = HandCalibrationWindow()
+        if hasattr(calibration_widget, 'apply_theme'):
+            calibration_widget.apply_theme(self.is_dark_theme)
         layout.addWidget(calibration_widget)
 
         self.stacked_widget.addWidget(self.calibration_page)
