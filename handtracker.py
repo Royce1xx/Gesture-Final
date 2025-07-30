@@ -13,15 +13,21 @@ upperSkin = np.array([255, 173, 127], dtype=np.uint8)
 GESTURE_FILE = "gestures.json"
 
 # Load or initialize gesture data
-if os.path.exists(GESTURE_FILE):
-    with open(GESTURE_FILE, "r") as f:
-        gesture_db = json.load(f)
-else:
-    gesture_db = {}
+gesture_db = {}
+if os.path.exists(GESTURE_FILE) and os.path.isfile(GESTURE_FILE):
+    try:
+        with open(GESTURE_FILE, "r") as f:
+            content = f.read().strip()
+            if content:
+                gesture_db = json.loads(content)
+            else:
+                print("⚠️ gestures.json is empty. Starting with empty database.")
+    except json.JSONDecodeError:
+        print("⚠️ gestures.json is corrupted. Starting fresh.")
 
 def save_gesture_data():
     with open(GESTURE_FILE, "w") as f:
-        json.dump(gesture_db, f)
+        json.dump(gesture_db, f, indent=2)
 
 def extract_gesture_vector(contour, defects, frame_height):
     vector = []
@@ -67,6 +73,10 @@ recording = False
 current_label = ""
 sample_buffer = []
 
+# New typing input state
+typing_label = False
+typed_input = ""
+
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -87,12 +97,15 @@ while True:
             hull = cv2.convexHull(handCont)
             cv2.drawContours(frame, [hull], -1, (255, 0, 0), 2)
             hull_indices = cv2.convexHull(handCont, returnPoints=False)
-            defects = cv2.convexityDefects(handCont, hull_indices)
+
+            if hull_indices is not None and len(hull_indices) > 3:
+                defects = cv2.convexityDefects(handCont, hull_indices)
+            else:
+                defects = None
 
             gesture_vector = extract_gesture_vector(handCont, defects, frame.shape[0])
             print("Live vector:", gesture_vector)
 
-            # --- Training Mode ---
             if recording:
                 sample_buffer.append(gesture_vector)
                 cv2.putText(frame, f"Recording {current_label}: {len(sample_buffer)}/30", (10, 90),
@@ -100,32 +113,48 @@ while True:
                 if len(sample_buffer) >= 30:
                     gesture_db[current_label] = sample_buffer.copy()
                     save_gesture_data()
-                    print(f"Saved gesture: {current_label}")
+                    print(f"✅ Saved gesture: {current_label}")
                     sample_buffer.clear()
                     recording = False
-
-            # --- Recognition ---
             else:
                 for label, vectors in gesture_db.items():
                     if match_gesture(gesture_vector, vectors):
                         cv2.putText(frame, f"Matched: {label}", (10, 130),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-                        print(f"Matched gesture: {label}")
+                        print(f"✔ Matched gesture: {label}")
                         break
+
+    # Draw input field if typing
+    if typing_label:
+        cv2.putText(frame, f"Type gesture name: {typed_input}_", (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
 
     cv2.imshow("Hand Tracker", frame)
     cv2.imshow("Skin Mask", skinMask)
 
     key = cv2.waitKey(1) & 0xFF
 
-    if key == ord('q'):
-        break
+    # Typing mode handling
+    if typing_label:
+        if key == 13 or key == 10:  # Enter
+            current_label = typed_input.strip().lower()
+            if current_label:
+                recording = True
+                sample_buffer = []
+                print(f"🎥 Started recording gesture: {current_label}")
+            typed_input = ""
+            typing_label = False
+        elif key == 8 or key == 127:  # Backspace
+            typed_input = typed_input[:-1]
+        elif 32 <= key <= 126:  # Printable ASCII
+            typed_input += chr(key)
 
+    # Normal keybinds
+    elif key == ord('q'):
+        break
     elif key == ord('c') and not recording:
-        current_label = input("Enter gesture label: ")
-        sample_buffer = []
-        recording = True
-        print(f"Started recording gesture: {current_label}")
+        typing_label = True
+        typed_input = ""
 
 cap.release()
 cv2.destroyAllWindows()
