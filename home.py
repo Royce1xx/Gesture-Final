@@ -6,7 +6,9 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
 
+from trainGestures import TrainGestureWindow
 from settings import HandCalibrationWindow
+
 
 class SlimCard(QFrame):
     def __init__(self, title, subtitle="", icon="", parent=None):
@@ -167,7 +169,9 @@ class HomePage(QWidget):
             card = SlimCard(title, subtitle, icon, self)
             self.cards.append(card)
             cards_layout.addWidget(card)
-            if title == "Settings & Config":
+            if title == "Train New Gestures":
+                card.mousePressEvent = self.open_train_gesture
+            elif title == "Settings & Config":
                 card.mousePressEvent = self.open_settings
 
         self.main_layout.addLayout(cards_layout)
@@ -177,12 +181,6 @@ class HomePage(QWidget):
         self.layout().addWidget(self.stacked_widget)
 
     def toggle_theme(self):
-        # update current page if settings is open
-        if hasattr(self, 'calibration_page'):
-            for i in range(self.calibration_page.layout().count()):
-                widget = self.calibration_page.layout().itemAt(i).widget()
-                if hasattr(widget, 'apply_theme'):
-                    widget.apply_theme(not self.is_dark_theme)
         self.is_dark_theme = not self.is_dark_theme
         self.apply_theme()
 
@@ -210,9 +208,9 @@ class HomePage(QWidget):
         for card in self.cards:
             card.apply_theme(self.is_dark_theme)
 
-    def open_settings(self, event):
-        self.calibration_page = QWidget()
-        layout = QVBoxLayout(self.calibration_page)
+    def open_train_gesture(self, event):
+        self.train_page = QWidget()
+        layout = QVBoxLayout(self.train_page)
 
         back_btn = QPushButton("← Back")
         back_btn.setFixedSize(100, 36)
@@ -232,13 +230,39 @@ class HomePage(QWidget):
         back_btn.clicked.connect(self.go_back_home)
         layout.addWidget(back_btn, alignment=Qt.AlignLeft)
 
-        calibration_widget = HandCalibrationWindow()
-        if hasattr(calibration_widget, 'apply_theme'):
-            calibration_widget.apply_theme(self.is_dark_theme)
-        layout.addWidget(calibration_widget)
+        train_widget = TrainGestureWindow()
+        layout.addWidget(train_widget)
 
-        self.stacked_widget.addWidget(self.calibration_page)
-        self.stacked_widget.setCurrentWidget(self.calibration_page)
+        self.stacked_widget.addWidget(self.train_page)
+        self.stacked_widget.setCurrentWidget(self.train_page)
+
+    def open_settings(self, event):
+        self.settings_page = QWidget()
+        layout = QVBoxLayout(self.settings_page)
+
+        back_btn = QPushButton("← Back")
+        back_btn.setFixedSize(100, 36)
+        back_btn.setCursor(Qt.PointingHandCursor)
+        back_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #40e0ff;
+                color: black;
+                font-weight: bold;
+                font-size: 13px;
+                border-radius: 8px;
+            }
+            QPushButton:hover {
+                background-color: #66ebff;
+            }
+        """)
+        back_btn.clicked.connect(self.go_back_home)
+        layout.addWidget(back_btn, alignment=Qt.AlignLeft)
+
+        settings_widget = HandCalibrationWindow()
+        layout.addWidget(settings_widget)
+
+        self.stacked_widget.addWidget(self.settings_page)
+        self.stacked_widget.setCurrentWidget(self.settings_page)
 
 
 if __name__ == "__main__":
