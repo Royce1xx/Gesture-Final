@@ -6,9 +6,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
 
-from trainGestures import TrainGestureWindow
-from settings import HandCalibrationWindow
-
+from UI.trainGestures import TrainGestureWindow
+from UI.settings import HandCalibrationWindow
 
 class SlimCard(QFrame):
     def __init__(self, title, subtitle="", icon="", parent=None):
@@ -107,12 +106,10 @@ class HomePage(QWidget):
 
         self.logo = QLabel("GESTURE")
         self.logo.setFont(QFont("Segoe UI", 28, QFont.Light))
-
         self.logo_glow = QGraphicsDropShadowEffect()
         self.logo_glow.setBlurRadius(30)
         self.logo_glow.setOffset(0, 0)
         self.logo.setGraphicsEffect(self.logo_glow)
-
         header_layout.addWidget(self.logo)
 
         self.theme_btn = QPushButton("☀️")
@@ -181,6 +178,11 @@ class HomePage(QWidget):
         self.layout().addWidget(self.stacked_widget)
 
     def toggle_theme(self):
+        if hasattr(self, 'calibration_page'):
+            for i in range(self.calibration_page.layout().count()):
+                widget = self.calibration_page.layout().itemAt(i).widget()
+                if hasattr(widget, 'apply_theme'):
+                    widget.apply_theme(not self.is_dark_theme)
         self.is_dark_theme = not self.is_dark_theme
         self.apply_theme()
 
@@ -237,8 +239,8 @@ class HomePage(QWidget):
         self.stacked_widget.setCurrentWidget(self.train_page)
 
     def open_settings(self, event):
-        self.settings_page = QWidget()
-        layout = QVBoxLayout(self.settings_page)
+        self.calibration_page = QWidget()
+        layout = QVBoxLayout(self.calibration_page)
 
         back_btn = QPushButton("← Back")
         back_btn.setFixedSize(100, 36)
@@ -258,11 +260,13 @@ class HomePage(QWidget):
         back_btn.clicked.connect(self.go_back_home)
         layout.addWidget(back_btn, alignment=Qt.AlignLeft)
 
-        settings_widget = HandCalibrationWindow()
-        layout.addWidget(settings_widget)
+        calibration_widget = HandCalibrationWindow()
+        if hasattr(calibration_widget, 'apply_theme'):
+            calibration_widget.apply_theme(self.is_dark_theme)
+        layout.addWidget(calibration_widget)
 
-        self.stacked_widget.addWidget(self.settings_page)
-        self.stacked_widget.setCurrentWidget(self.settings_page)
+        self.stacked_widget.addWidget(self.calibration_page)
+        self.stacked_widget.setCurrentWidget(self.calibration_page)
 
 
 if __name__ == "__main__":

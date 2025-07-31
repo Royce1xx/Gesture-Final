@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication
-from signup import SignUpWindow
-from login import LoginWindow
+from auth.signup import SignUpWindow
+from auth.login import LoginWindow
 
 class AppController:
     def __init__(self):
