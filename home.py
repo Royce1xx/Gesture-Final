@@ -8,6 +8,9 @@ from PyQt5.QtCore import Qt
 
 from UI.trainGestures import TrainGestureWindow
 from UI.settings import HandCalibrationWindow
+from UI.liveRecognition import LiveRecognitionWindow
+from UI.gestureLibrary import GestureLibraryWindow
+from UI.analytics import AnalyticsWindow
 
 class SlimCard(QFrame):
     def __init__(self, title, subtitle="", icon="", parent=None):
@@ -83,7 +86,6 @@ class SlimCard(QFrame):
         self.glow.setBlurRadius(20)
         super().leaveEvent(event)
 
-
 class HomePage(QWidget):
     def __init__(self):
         super().__init__()
@@ -120,28 +122,6 @@ class HomePage(QWidget):
         header_layout.addWidget(self.theme_btn)
         header_layout.addStretch()
 
-        gesture_section = QVBoxLayout()
-        gesture_section.setSpacing(6)
-        gesture_section.setAlignment(Qt.AlignCenter)
-
-        self.gesture_header = QLabel("Current Hand Gesture")
-        self.gesture_header.setFont(QFont("Segoe UI", 12))
-        self.gesture_header.setAlignment(Qt.AlignCenter)
-
-        status_layout = QHBoxLayout()
-        self.status_dot = QLabel("●")
-        self.status_dot.setFont(QFont("Segoe UI", 10))
-        self.status_text = QLabel("Fist")
-        self.status_text.setFont(QFont("Segoe UI", 16, QFont.Medium))
-        self.status_text.setAlignment(Qt.AlignCenter)
-
-        status_layout.addWidget(self.status_dot)
-        status_layout.addWidget(self.status_text)
-
-        gesture_section.addWidget(self.gesture_header)
-        gesture_section.addLayout(status_layout)
-        header_layout.addLayout(gesture_section)
-
         self.main_layout.addLayout(header_layout)
 
         self.welcome = QLabel("Welcome back, Royce")
@@ -170,6 +150,12 @@ class HomePage(QWidget):
                 card.mousePressEvent = self.open_train_gesture
             elif title == "Settings & Config":
                 card.mousePressEvent = self.open_settings
+            elif title == "Live Recognition":
+                card.mousePressEvent = self.open_live_recognition
+            elif title == "Gesture Library":
+                card.mousePressEvent = self.open_gesture_library
+            elif title == "Analytics":
+                card.mousePressEvent = self.open_analytics
 
         self.main_layout.addLayout(cards_layout)
 
@@ -178,11 +164,6 @@ class HomePage(QWidget):
         self.layout().addWidget(self.stacked_widget)
 
     def toggle_theme(self):
-        if hasattr(self, 'calibration_page'):
-            for i in range(self.calibration_page.layout().count()):
-                widget = self.calibration_page.layout().itemAt(i).widget()
-                if hasattr(widget, 'apply_theme'):
-                    widget.apply_theme(not self.is_dark_theme)
         self.is_dark_theme = not self.is_dark_theme
         self.apply_theme()
 
@@ -195,16 +176,12 @@ class HomePage(QWidget):
             self.logo.setStyleSheet("color: #40e0ff;")
             self.theme_btn.setText("☀️")
             self.theme_btn.setStyleSheet("color: #ffffff; background-color: #222; border: 1px solid #444; border-radius: 20px;")
-            self.status_dot.setStyleSheet("color: #00ff88;")
-            self.status_text.setStyleSheet("color: white;")
             self.welcome.setStyleSheet("color: white;")
         else:
             self.setStyleSheet("background-color: #f8fbff;")
             self.logo.setStyleSheet("color: #1e88e5;")
             self.theme_btn.setText("🌙")
             self.theme_btn.setStyleSheet("color: #1a237e; background-color: #ddeeff; border: 1px solid #aaccff; border-radius: 20px;")
-            self.status_dot.setStyleSheet("color: #00c853;")
-            self.status_text.setStyleSheet("color: #1a237e;")
             self.welcome.setStyleSheet("color: #1a237e;")
 
         for card in self.cards:
@@ -216,19 +193,6 @@ class HomePage(QWidget):
 
         back_btn = QPushButton("← Back")
         back_btn.setFixedSize(100, 36)
-        back_btn.setCursor(Qt.PointingHandCursor)
-        back_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #40e0ff;
-                color: black;
-                font-weight: bold;
-                font-size: 13px;
-                border-radius: 8px;
-            }
-            QPushButton:hover {
-                background-color: #66ebff;
-            }
-        """)
         back_btn.clicked.connect(self.go_back_home)
         layout.addWidget(back_btn, alignment=Qt.AlignLeft)
 
@@ -244,30 +208,59 @@ class HomePage(QWidget):
 
         back_btn = QPushButton("← Back")
         back_btn.setFixedSize(100, 36)
-        back_btn.setCursor(Qt.PointingHandCursor)
-        back_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #40e0ff;
-                color: black;
-                font-weight: bold;
-                font-size: 13px;
-                border-radius: 8px;
-            }
-            QPushButton:hover {
-                background-color: #66ebff;
-            }
-        """)
         back_btn.clicked.connect(self.go_back_home)
         layout.addWidget(back_btn, alignment=Qt.AlignLeft)
 
         calibration_widget = HandCalibrationWindow()
-        if hasattr(calibration_widget, 'apply_theme'):
-            calibration_widget.apply_theme(self.is_dark_theme)
         layout.addWidget(calibration_widget)
 
         self.stacked_widget.addWidget(self.calibration_page)
         self.stacked_widget.setCurrentWidget(self.calibration_page)
 
+    def open_live_recognition(self, event):
+        self.live_page = QWidget()
+        layout = QVBoxLayout(self.live_page)
+
+        back_btn = QPushButton("← Back")
+        back_btn.setFixedSize(100, 36)
+        back_btn.clicked.connect(self.go_back_home)
+        layout.addWidget(back_btn, alignment=Qt.AlignLeft)
+
+        live_widget = LiveRecognitionWindow()
+        layout.addWidget(live_widget)
+
+        self.stacked_widget.addWidget(self.live_page)
+        self.stacked_widget.setCurrentWidget(self.live_page)
+
+    def open_gesture_library(self, event):
+        self.library_page = QWidget()
+        layout = QVBoxLayout(self.library_page)
+
+        back_btn = QPushButton("← Back")
+        back_btn.setFixedSize(100, 36)
+        back_btn.clicked.connect(self.go_back_home)
+        layout.addWidget(back_btn, alignment=Qt.AlignLeft)
+
+        lib_widget = GestureLibraryWindow()
+        layout.addWidget(lib_widget)
+
+        self.stacked_widget.addWidget(self.library_page)
+        self.stacked_widget.setCurrentWidget(self.library_page)
+
+    def open_analytics(self, event):
+        self.analytics_page = QWidget()
+        layout = QVBoxLayout(self.analytics_page)
+
+        back_btn = QPushButton("← Back")
+        back_btn.setFixedSize(100, 36)
+        back_btn.clicked.connect(self.go_back_home)
+        layout.addWidget(back_btn, alignment=Qt.AlignLeft)
+
+        analytics_widget = AnalyticsWindow()
+        layout.addWidget(analytics_widget)
+
+        self.stacked_widget.addWidget(self.analytics_page)
+        self.stacked_widget.setCurrentWidget(self.analytics_page)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
