@@ -42,4 +42,4 @@ for filename in tqdm(os.listdir(INPUT_FOLDER)):
     except Exception as e:
         continue  
 
-print(f"\n Done Cleaned and saved {image_count} images to '{OUTPUT_FOLDER}'.")
+print(f"\n Done Cleaned and saved {image_count} images to '{OUTPUT_FOLDER}'.") #new
