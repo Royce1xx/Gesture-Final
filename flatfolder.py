@@ -3,7 +3,7 @@ import shutil
 import zipfile
 
 # === CONFIGURATION ===
-ZIP_PATH = r"C:\Users\genui\Downloads\Nohands3.zip"
+ZIP_PATH = r"C:\Users\genui\Downloads\Nohands4.zip"
 EXTRACT_DIR = "temp_extracted"
 DEST_DIR = "flat_folder2"
 VALID_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.bmp', '.gif']
